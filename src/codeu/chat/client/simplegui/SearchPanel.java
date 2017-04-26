@@ -24,7 +24,7 @@ public final class SearchPanel extends JPanel {
     initialize();
   }
 
-  // Update function for conversation changes.
+  /** Update function for conversation changes. */
   public void update(ConversationSummary owningConversation) {
     if(!sTerm.equals(""))
       searchAndDisplay(owningConversation, sTerm);
@@ -34,11 +34,17 @@ public final class SearchPanel extends JPanel {
     }
   }
 
+  /** Sets up JPanel objects within SearchPanel that produce,
+   * from top to bottom, a Title bar, a panel for displaying
+   * messeges, and a button bar.
+   */
   private void initialize() {
+    initializeTitle();
+    initializeWindow();
+    initializeButton();
+  }
 
-    // This panel contains from top to bottom; a title bar,
-    // a panel to display messages, and a button bar.
-
+  private void initializeTitle() {
     // The title bar, also includes searched term.
     final JPanel titlePanel = new JPanel(new GridBagLayout());
     final GridBagConstraints titlePanelC = new GridBagConstraints();
@@ -66,7 +72,19 @@ public final class SearchPanel extends JPanel {
     titlePanel.add(currentSearch, currentSearchC);
     titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    // Message show panel.
+    // Place title bar at top of SearchPanel.
+    titlePanelC.gridx = 0;
+    titlePanelC.gridy = 0;
+    titlePanelC.gridwidth = 10;
+    titlePanelC.gridheight = 1;
+    titlePanelC.fill = GridBagConstraints.HORIZONTAL;
+    titlePanelC.anchor = GridBagConstraints.FIRST_LINE_START;
+
+    this.add(titlePanel, titlePanelC);
+  }
+
+  private void initializeWindow() {
+    // Message display window.
     final JPanel listShowPanel = new JPanel();
     final GridBagConstraints listPanelC = new GridBagConstraints();
 
@@ -80,21 +98,7 @@ public final class SearchPanel extends JPanel {
     userListScrollPane.setMinimumSize(new Dimension(500, 100));
     userListScrollPane.setPreferredSize(new Dimension(500, 100));
 
-    // Button panel.
-    final JPanel buttonPanel = new JPanel();
-    final GridBagConstraints buttonPanelC = new GridBagConstraints();
-
-    final JButton searchButton = new JButton("Search");
-    buttonPanel.add(searchButton);
-
-    // Placement of title, message, and button panels.
-    titlePanelC.gridx = 0;
-    titlePanelC.gridy = 0;
-    titlePanelC.gridwidth = 10;
-    titlePanelC.gridheight = 1;
-    titlePanelC.fill = GridBagConstraints.HORIZONTAL;
-    titlePanelC.anchor = GridBagConstraints.FIRST_LINE_START;
-
+    // Place message window under title bar.
     listPanelC.gridx = 0;
     listPanelC.gridy = 1;
     listPanelC.gridwidth = 10;
@@ -103,6 +107,18 @@ public final class SearchPanel extends JPanel {
     listPanelC.anchor = GridBagConstraints.FIRST_LINE_START;
     listPanelC.weighty = 0.8;
 
+    this.add(listShowPanel, listPanelC);
+  }
+
+  private void initializeButton() {
+    // Button panel.
+    final JPanel buttonPanel = new JPanel();
+    final GridBagConstraints buttonPanelC = new GridBagConstraints();
+
+    final JButton searchButton = new JButton("Search");
+    buttonPanel.add(searchButton);
+
+    // Place button panel at bottom of SearchPanel.
     buttonPanelC.gridx = 0;
     buttonPanelC.gridy = 7;
     buttonPanelC.gridwidth = 10;
@@ -110,10 +126,9 @@ public final class SearchPanel extends JPanel {
     buttonPanelC.fill = GridBagConstraints.HORIZONTAL;
     buttonPanelC.anchor = GridBagConstraints.FIRST_LINE_START;
 
-    this.add(titlePanel, titlePanelC);
-    this.add(listShowPanel, listPanelC);
     this.add(buttonPanel, buttonPanelC);
 
+    // Setup method for button click.
     // User clicks Search button - prompt for search term, search and display.
     searchButton.addActionListener(new ActionListener() {
       @Override
@@ -150,7 +165,7 @@ public final class SearchPanel extends JPanel {
       console.log
  }
 
-  // TODO implement the proper search calls and remove stubby test search code.
+  // TODO(Maitreyee) implement the search calls and remove stubby test search code.
   // Clears panel, sends search call, displays results, updates current search.
   private void searchAndDisplay(ConversationSummary conversation, String searchTerm) {
     currentSearch.setText("Looking for: '" + searchTerm + "'");
