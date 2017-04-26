@@ -133,6 +133,22 @@ public final class SearchPanel extends JPanel {
       }
     );
   }
+  public void Query(ClientContext myContext, String myquery) {  
+    ClientMessage message = myContext.message;
+    ClientConversation convo = myContext.conversation;
+    List<Message> contents = message.getConversationContents(convo.currentSummary);
+    String[]searchWords = myquery.split(\p{Space}|\p{Punct});
+    for (Message m : contents) {
+        String[]tokens = m.content.split(\p{Space}|\p{Punct});
+        for (String searchw : searchWords) {
+          if (tokens.contains(searchw)) {
+
+          }
+        }
+      }
+
+      console.log
+ }
 
   // TODO implement the proper search calls and remove stubby test search code.
   // Clears panel, sends search call, displays results, updates current search.
