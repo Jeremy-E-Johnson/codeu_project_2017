@@ -28,6 +28,8 @@ import codeu.chat.util.store.StoreAccessor;
 
 public final class Model {
 
+
+
   private static final Comparator<Uuid> UUID_COMPARE = new Comparator<Uuid>() {
 
     @Override
@@ -68,6 +70,27 @@ public final class Model {
   private final Uuid.Generator userGenerations = new LinearUuidGenerator(null, 1, Integer.MAX_VALUE);
   private Uuid currentUserGeneration = userGenerations.make();
 
+  //added this to reference database
+ // private Database database = new Database();
+
+  // public Model {
+  //   ResultSet result = database.getUsers();
+  //    //iterate through list of existing users stored in database and update gui accordingly
+  //   try {
+  //     while (result.next()) {
+  //         System.out.println("list Users");
+
+  //         // Uuid id = (Uuid) result.getBlob("ID");
+  //         // Time creation = (Time) result.getBlob("CREATION");
+  //         String name = result.getString("NAME");
+  //         System.out.println(name);
+  //         newUser(name);
+  //      //   newUser(id, name, creation);
+  //     }
+  // }
+
+
+
   public void add(User user) {
     currentUserGeneration = userGenerations.make();
 
@@ -75,6 +98,7 @@ public final class Model {
     userByTime.insert(user.creation, user);
     userByText.insert(user.name, user);
   }
+
 
   public StoreAccessor<Uuid, User> userById() {
     return userById;

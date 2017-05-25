@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.*;
 import java.util.Collection;
 
 import codeu.chat.common.Conversation;
@@ -34,9 +35,11 @@ import codeu.chat.common.User;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
 import codeu.chat.util.Logger;
+import codeu.chat.util.store.*;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Timeline;
 import codeu.chat.util.connections.Connection;
+import java.sql.*;
 
 public final class Server {
 
@@ -55,6 +58,10 @@ public final class Server {
 
   private final Relay relay;
   private Uuid lastSeen = Uuids.NULL;
+
+  //added database
+  private final Database database = new Database(); 
+
 
   public Server(final Uuid id, final byte[] secret, final Relay relay) {
 
@@ -99,7 +106,53 @@ public final class Server {
               connection.in(),
               connection.out());
 
+
+          //start updating userlist in central database
+          //TODO: change this to accommodate proper storage of uuid and time types
+          ResultSet result = database.getUsers();
+          long firstTimeLong = result.getLong("CREATION");
+        //  System.out.println(firstTimeLong);
+          Time firstTime = Time.fromMs(firstTimeLong);
+
+          //existing server user list
+          StoreAccessor<Time, User> currUsers = model.userByTime();
+          User firstUser = currUsers.first(firstTime);
+
+          if (firstUser == null) {
+
+            // //iterate through list of existing users stored in database and update gui accordingly
+              try {
+                while (result.next()) {
+                    
+                    // Uuid id = (Uuid) result.getBlob("ID");
+                    // Time creation = (Time) result.getBlob("CREATION");
+                    String name = result.getString("NAME");
+                    String stringId = result.getString("ID");
+                    long longTime = result.getLong("CREATION");
+                    System.out.println(name);
+
+                    Time creation = Time.fromMs(longTime);
+                    //creation = creation.fromMs(longTime);
+                    Uuid id = Uuids.fromString(stringId);
+                  
+
+                    final User user = controller.newUser(id, name, creation);
+                 //   newUser(id, name, creation);
+                }
+              } catch (Exception e) {
+                System.out.println("???????list Users");
+                LOG.error(e, "Exception while handling connection.");
+              }
+
+          }
+
+
+
+
+
+
           LOG.info("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
+
         } catch (Exception ex) {
 
           LOG.error(ex, "Exception while handling connection.");
@@ -141,8 +194,11 @@ public final class Server {
 
       final User user = controller.newUser(name);
 
+      database.addUser(user.id, user.creation, user.name);
+
       Serializers.INTEGER.write(out, NetworkCode.NEW_USER_RESPONSE);
       Serializers.nullable(User.SERIALIZER).write(out, user);
+
 
     } else if (type == NetworkCode.NEW_CONVERSATION_REQUEST) {
 
