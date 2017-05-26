@@ -20,9 +20,9 @@ import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
 import codeu.chat.common.LinearUuidGenerator;
 import codeu.chat.common.Message;
-import codeu.chat.common.Time;
 import codeu.chat.common.User;
-import codeu.chat.common.Uuid;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 import codeu.chat.util.store.Store;
 import codeu.chat.util.store.StoreAccessor;
 
@@ -69,26 +69,6 @@ public final class Model {
 
   private final Uuid.Generator userGenerations = new LinearUuidGenerator(null, 1, Integer.MAX_VALUE);
   private Uuid currentUserGeneration = userGenerations.make();
-
-  //added this to reference database
- // private Database database = new Database();
-
-  // public Model {
-  //   ResultSet result = database.getUsers();
-  //    //iterate through list of existing users stored in database and update gui accordingly
-  //   try {
-  //     while (result.next()) {
-  //         System.out.println("list Users");
-
-  //         // Uuid id = (Uuid) result.getBlob("ID");
-  //         // Time creation = (Time) result.getBlob("CREATION");
-  //         String name = result.getString("NAME");
-  //         System.out.println(name);
-  //         newUser(name);
-  //      //   newUser(id, name, creation);
-  //     }
-  // }
-
 
 
   public void add(User user) {

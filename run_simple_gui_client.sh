@@ -18,6 +18,10 @@ LOCAL_MACHINE="localhost@2007"
 
 cd './bin'
 
-java codeu.chat.SimpleGuiClientMain "$LOCAL_MACHINE"
+
+#java codeu.chat.SimpleGuiClientMain "$LOCAL_MACHINE"
 #java -cp ./third_party/junit4.jar:./third_party/sqlite-jdbc-3.18.0.jar:./bin codeu.chat.SimpleGuiClientMain 
 #java -classpath "bin/codeu/chat/client;sqlite-jdbc-3.7.2.jar" codeu.chat.SimpleGuiClientMain "$LOCAL_MACHINE"
+
+java codeu.chat.SimpleGuiClientMain "${LOCAL_MACHINE}"
+

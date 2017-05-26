@@ -19,13 +19,13 @@ import java.util.Collection;
 import codeu.chat.common.BasicController;
 import codeu.chat.common.Conversation;
 import codeu.chat.common.Message;
+import codeu.chat.common.RandomUuidGenerator;
 import codeu.chat.common.RawController;
-import codeu.chat.common.Time;
 import codeu.chat.common.User;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
 import codeu.chat.util.Logger;
 import java.sql.*;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 
 public final class Controller implements RawController, BasicController {
 
@@ -42,39 +42,7 @@ public final class Controller implements RawController, BasicController {
   public Controller(Uuid serverId, Model model) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
-    
-//    this.database = new Database();
 
-    // //get list of existing users
-    // ResultSet result = database.getUsers();
-
-    // //iterate through list of existing users stored in database and update gui accordingly
-    // try {
-    //   while (result.next()) {
-    //       System.out.println("list Users");
-
-    //       // Uuid id = (Uuid) result.getBlob("ID");
-    //       // Time creation = (Time) result.getBlob("CREATION");
-    //       String name = result.getString("NAME");
-    //       System.out.println(name);
-    //       newUser(name);
-    //    //   newUser(id, name, creation);
-    //   }
-      
-
-      //delete this later
-    //   System.out.println("hi");
-
-      
-
-    // } catch (Exception e) {
-
-    //   System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-    //   System.exit(0);
-
-    // }
-
-    
     
     
   }
@@ -106,7 +74,8 @@ public final class Controller implements RawController, BasicController {
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
-      message = new Message(id, Uuids.NULL, Uuids.NULL, creationTime, author, body);
+
+      message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body);
 
       model.add(message);
       LOG.info("Message added: %s", message.id);
@@ -114,7 +83,7 @@ public final class Controller implements RawController, BasicController {
       // Find and update the previous "last" message so that it's "next" value
       // will point to the new message.
 
-      if (Uuids.equals(foundConversation.lastMessage, Uuids.NULL)) {
+      if (Uuid.equals(foundConversation.lastMessage, Uuid.NULL)) {
 
         // The conversation has no messages in it, that's why the last message is NULL (the first
         // message should be NULL too. Since there is no last message, then it is not possible
@@ -131,7 +100,7 @@ public final class Controller implements RawController, BasicController {
       // not change.
 
       foundConversation.firstMessage =
-          Uuids.equals(foundConversation.firstMessage, Uuids.NULL) ?
+          Uuid.equals(foundConversation.firstMessage, Uuid.NULL) ?
           message.id :
           foundConversation.firstMessage;
 
