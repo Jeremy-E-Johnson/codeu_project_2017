@@ -40,11 +40,13 @@ public final class RemoteRelay implements Relay {
     private final Uuid id;
     private final Time time;
     private final String text;
+    private final byte[] hashedPassword;
 
-    public Component(Uuid id, Time time, String text) {
+    public Component(Uuid id, Time time, String text, byte[] hashedPassword) {
       this.id = id;
       this.time = time;
       this.text = text;
+      this.hashedPassword = hashedPassword;
     }
 
     @Override
@@ -55,6 +57,9 @@ public final class RemoteRelay implements Relay {
 
     @Override
     public String text() { return text; }
+
+    @Override
+    public byte[] hashedPassword() { return hashedPassword; }
   }
 
   private static final Serializer<Relay.Bundle.Component> COMPONENT_SERIALIZER =
@@ -66,8 +71,9 @@ public final class RemoteRelay implements Relay {
       final Uuid id = Uuids.SERIALIZER.read(in);
       final String text = Serializers.STRING.read(in);
       final Time time = Time.SERIALIZER.read(in);
+      final byte[] hashedPassword = Serializers.BYTES.read(in);
 
-      return new Component(id, time, text);
+      return new Component(id, time, text, hashedPassword);
     }
 
     @Override
@@ -75,6 +81,7 @@ public final class RemoteRelay implements Relay {
       Uuids.SERIALIZER.write(out, value.id());
       Serializers.STRING.write(out, value.text());
       Time.SERIALIZER.write(out, value.time());
+      Serializers.BYTES.write(out, value.hashedPassword());
     }
   };
 
@@ -125,8 +132,8 @@ public final class RemoteRelay implements Relay {
   }
 
   @Override
-  public Relay.Bundle.Component pack(Uuid id, String text, Time time) {
-    return new Component(id, time, text);
+  public Relay.Bundle.Component pack(Uuid id, String text, Time time, byte[] hashedPassword) {
+    return new Component(id, time, text, hashedPassword);
   }
 
   @Override

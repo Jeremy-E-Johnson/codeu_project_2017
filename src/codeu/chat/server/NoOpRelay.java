@@ -32,7 +32,8 @@ public final class NoOpRelay implements Relay {
   @Override
   public Relay.Bundle.Component pack(final Uuid id,
                                      final String text,
-                                     final Time time) {
+                                     final Time time,
+                                     final byte[] hashedPassword) {
 
     return new Relay.Bundle.Component() {
       @Override
@@ -43,6 +44,9 @@ public final class NoOpRelay implements Relay {
 
       @Override
       public String text() { return text; }
+
+      @Override
+      public byte[] hashedPassword() { return hashedPassword; }
     };
   }
 

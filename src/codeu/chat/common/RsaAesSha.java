@@ -132,7 +132,8 @@ public class RsaAesSha implements Encryption{
     return cipherData;
   }
 
-  public byte[] hash(byte[] data){
+
+  public byte[] hash(byte[] data) {
     md.update(data);
     byte[] value = md.digest();
     return value;
