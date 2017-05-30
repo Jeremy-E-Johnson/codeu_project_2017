@@ -176,16 +176,25 @@ public final class SearchPanel extends JPanel {
     // Here we need to call a search function that returns a ListViewable object of the messages to display.
     // This then replaces the conversation contents call in the for loop.
 
-    for (final Message m : clientContext.message.getConversationContents(conversation)) {
-      // Stubby inclusion check for search.
-      if (m.content.toLowerCase().contains(searchTerm.toLowerCase())) {
-        // Display author name if available.  Otherwise display the author UUID.
-        final String authorName = clientContext.user.getName(m.author);
+    for (final ConversationSummary cs : clientContext.conversation.getConversationSummaries()) {
+      int first = 1;
+      for (final Message m : clientContext.message.getConversationContents(cs)) {
+        // Stubby inclusion check for search.
+        if (m.content.toLowerCase().contains(searchTerm.toLowerCase())) {
+          // Display author name if available.  Otherwise display the author UUID.
+          if (first == 1) {
+            String convoTitle = cs.title;
+            messageListModel.addElement(convoTitle);
+            first = 0;
+          }
 
-        final String displayString = String.format("%s: [%s]: %s",
-            ((authorName == null) ? m.author : authorName), m.creation, m.content);
+          final String authorName = clientContext.user.getName(m.author);
 
-        messageListModel.addElement(displayString);
+          final String displayString = String.format("%s: [%s]: %s",
+              ((authorName == null) ? m.author : authorName), m.creation, m.content);
+
+          messageListModel.addElement(displayString);
+        }
       }
     }
   }
