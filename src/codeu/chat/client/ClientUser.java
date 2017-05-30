@@ -33,6 +33,7 @@ public final class ClientUser {
   private final View view;
 
   private User current = null;
+  private int pass = 0;
 
   private final Map<Uuid, User> usersById = new HashMap<>();
 
@@ -57,6 +58,19 @@ public final class ClientUser {
     return clean;
   }
 
+  // Validate the password string
+  static public boolean isValidPassword(String password) {
+    boolean valid = true;
+    if (password.length() < 8 || password.length() > 30) {
+      valid = false;
+    }
+    return valid;
+  }
+
+  public int getPass() {
+    return pass;
+  }
+
   public boolean hasCurrent() {
     return (current != null);
   }
@@ -65,37 +79,45 @@ public final class ClientUser {
     return current;
   }
 
-  public boolean signInUser(String name) {
+  public boolean signInUser(String name, String password) {
     updateUsers();
 
-    final User prev = current;
-    if (name != null) {
-      final User newCurrent = usersByName.first(name);
-      if (newCurrent != null) {
-        current = newCurrent;
+    int response = controller.loginUser(name, password);
+
+    if (response != 0) {
+      if (current != null){
+        controller.logoutUser(current.name, pass);
       }
+      pass = response;
+      current = usersByName.first(name);
+      return true;
+    } else {
+      return false;
     }
-    return (prev != current);
   }
 
   public boolean signOutUser() {
-    boolean hadCurrent = hasCurrent();
+    boolean response = false;
+
+    if (current != null){
+      response = controller.logoutUser(current.name, pass);
+    }
     current = null;
-    return hadCurrent;
+    return response;
   }
 
   public void showCurrent() {
     printUser(current);
   }
 
-  public void addUser(String name) {
-    final boolean validInputs = isValidName(name);
+  public void addUser(String name, String password) {
+    final boolean validInputs = (isValidName(name) && isValidPassword(password));
 
-    final User user = (validInputs) ? controller.newUser(name) : null;
+    final User user = (validInputs) ? controller.newUser(name, password) : null;
 
     if (user == null) {
       System.out.format("Error: user not created - %s.\n",
-          (validInputs) ? "server failure" : "bad input value");
+          (validInputs) ? "server failure" : "bad input value. Make sure password is between 8 and 30 characters.");
     } else {
       LOG.info("New user complete, Name= \"%s\" UUID=%s", user.name, user.id);
       updateUsers();
