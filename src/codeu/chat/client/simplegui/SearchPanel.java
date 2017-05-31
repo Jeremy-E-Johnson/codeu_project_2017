@@ -183,6 +183,8 @@ public final class SearchPanel extends JPanel {
         if (m.content.toLowerCase().contains(searchTerm.toLowerCase())) {
           // Display author name if available.  Otherwise display the author UUID.
           if (first == 1) {
+            //String convoTitle = "<html>Word in <b> bold </b></html>";
+            //String convoTitle = String.format("<b> %s </b>", cs.title);
             String convoTitle = cs.title;
             messageListModel.addElement(convoTitle);
             first = 0;

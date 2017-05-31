@@ -93,30 +93,30 @@ public final class ChatSimpleGui {
     usersViewC.gridx = 0;
     usersViewC.gridy = 0;
     usersViewC.gridwidth = 1;
-    usersViewC.gridheight = 2;
+    usersViewC.gridheight = 1;
     usersViewC.fill = GridBagConstraints.BOTH;
     usersViewC.weightx = 0.3;
     usersViewC.weighty = 0.2;
 
-    conversationViewC.gridx = 1;
-    conversationViewC.gridy = 0;
+    conversationViewC.gridx = 0;
+    conversationViewC.gridy = 1;
     conversationViewC.gridwidth = 1;
-    conversationViewC.gridheight = 2;
+    conversationViewC.gridheight = 3;
     conversationViewC.fill = GridBagConstraints.BOTH;
     conversationViewC.weightx = 0.7;
     conversationViewC.weighty = 0.2;
 
-    messagesViewC.gridx = 0;
-    messagesViewC.gridy = 2;
+    messagesViewC.gridx = 1;
+    messagesViewC.gridy = 0;
     messagesViewC.gridwidth = 2;
-    messagesViewC.gridheight = 2;
+    messagesViewC.gridheight = 4;
     messagesViewC.fill = GridBagConstraints.BOTH;
     messagesViewC.weighty = 0.6;
 
-    searchViewC.gridx = 0;
-    searchViewC.gridy = 4;
+    searchViewC.gridx = 3;
+    searchViewC.gridy = 0;
     searchViewC.gridwidth = 2;
-    searchViewC.gridheight = 1;
+    searchViewC.gridheight = 4;
     searchViewC.fill = GridBagConstraints.BOTH;
     searchViewC.weighty = 0.3;
 

@@ -83,6 +83,7 @@ public final class UserPanel extends JPanel {
     listShowPanel.add(userListScrollPane);
     userListScrollPane.setPreferredSize(new Dimension(150, 150));
 
+
     // Current User panel
     final JPanel currentPanel = new JPanel();
     final GridBagConstraints currentPanelC = new GridBagConstraints();
@@ -100,7 +101,7 @@ public final class UserPanel extends JPanel {
     final JButton userSignInButton = new JButton("Sign In");
     final JButton userAddButton = new JButton("Add");
 
-    buttonPanel.add(userUpdateButton);
+    //buttonPanel.add(userUpdateButton);
     buttonPanel.add(userSignInButton);
     buttonPanel.add(userAddButton);
 
@@ -137,7 +138,7 @@ public final class UserPanel extends JPanel {
     this.add(titlePanel, titlePanelC);
     this.add(listShowPanel, listPanelC);
     this.add(buttonPanel, buttonPanelC);
-    this.add(currentPanel, currentPanelC);
+    //this.add(currentPanel, currentPanelC);
 
     userUpdateButton.addActionListener(new ActionListener() {
       @Override
