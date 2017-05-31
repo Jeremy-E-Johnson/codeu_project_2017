@@ -32,7 +32,7 @@ public final class Controller implements RawController, BasicController {
   private final static Logger.Log LOG = Logger.newLog(Controller.class);
 
   //database URL
-  private final String url = "jdbc:sqlite:data.db";
+  private static final String SERVER_URL = "jdbc:sqlite:data.db";
 
   private final Model model;
   private final Uuid.Generator uuidGenerator;
@@ -42,8 +42,6 @@ public final class Controller implements RawController, BasicController {
   public Controller(Uuid serverId, Model model) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
-
-    
     
   }
 

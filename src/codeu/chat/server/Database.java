@@ -30,8 +30,6 @@ import java.sql.DriverManager;
 public final class Database implements DatabaseInt {
 	private final String url;
 	private final Connection conn;
-	// private boolean isUsersEmpty = false;
-	// private boolean isConversationsEmpty = false;
 
 
 	public Database() {
