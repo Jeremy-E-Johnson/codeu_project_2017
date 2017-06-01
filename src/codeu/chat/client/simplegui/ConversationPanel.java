@@ -31,11 +31,13 @@ public final class ConversationPanel extends JPanel {
 
   private final ClientContext clientContext;
   private final MessagePanel messagePanel;
+  private final SearchPanel searchPanel;
 
-  public ConversationPanel(ClientContext clientContext, MessagePanel messagePanel) {
+  public ConversationPanel(ClientContext clientContext, MessagePanel messagePanel, SearchPanel searchPanel) {
     super(new GridBagLayout());
     this.clientContext = clientContext;
     this.messagePanel = messagePanel;
+    this.searchPanel = searchPanel;
     initialize();
   }
 
@@ -77,7 +79,7 @@ public final class ConversationPanel extends JPanel {
     final JButton addButton = new JButton("Add");
 
     updateButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-    buttonPanel.add(updateButton);
+    //buttonPanel.add(updateButton);
     buttonPanel.add(addButton);
 
     // Put panels together
@@ -146,6 +148,7 @@ public final class ConversationPanel extends JPanel {
           clientContext.conversation.setCurrent(cs);
 
           messagePanel.update(cs);
+          searchPanel.update(cs);
         }
       }
     });

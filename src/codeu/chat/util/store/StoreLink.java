@@ -14,6 +14,8 @@
 
 package codeu.chat.util.store;
 
+
+//Susan: I changed this to public to make my life easier
 final class StoreLink<KEY, VALUE> {
 
   public final KEY key;
