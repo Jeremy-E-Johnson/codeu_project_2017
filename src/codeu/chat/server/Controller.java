@@ -21,18 +21,36 @@ import java.util.Arrays;
 import codeu.chat.common.*;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
+import codeu.chat.common.BasicController;
+import codeu.chat.common.Conversation;
+import codeu.chat.common.Message;
+import codeu.chat.common.RandomUuidGenerator;
+import codeu.chat.common.RawController;
+import codeu.chat.common.User;
+import java.sql.*;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
+
 
 public final class Controller implements RawController, BasicController {
 
   private final static Logger.Log LOG = Logger.newLog(Controller.class);
 
+
   private final Encryption encryption = new RsaAesSha();
+
+  //database URL
+  private static final String SERVER_URL = "jdbc:sqlite:data.db";
+
   private final Model model;
   private final Uuid.Generator uuidGenerator;
+ // private final Database database;
+  
 
   public Controller(Uuid serverId, Model model) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
+    
   }
 
   @Override
@@ -43,6 +61,7 @@ public final class Controller implements RawController, BasicController {
   @Override
   public User newUser(String name, String password) {
     return newUser(createId(), name, Time.now(), password);
+
   }
 
   @Override
@@ -61,20 +80,23 @@ public final class Controller implements RawController, BasicController {
 
     if (foundUser != null && foundConversation != null && isIdFree(id) && pass == userPass) {
 
-      message = new Message(id, Uuids.NULL, Uuids.NULL, creationTime, author, body);
+
+      message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body);
+
       model.add(message);
       LOG.info("Message added: %s", message.id);
 
       // Find and update the previous "last" message so that it's "next" value
       // will point to the new message.
 
-      if (Uuids.equals(foundConversation.lastMessage, Uuids.NULL)) {
+      if (Uuid.equals(foundConversation.lastMessage, Uuid.NULL)) {
 
         // The conversation has no messages in it, that's why the last message is NULL (the first
         // message should be NULL too. Since there is no last message, then it is not possible
         // to update the last message's "next" value.
 
       } else {
+
         final Message lastMessage = model.messageById().first(foundConversation.lastMessage);
         lastMessage.next = message.id;
       }
@@ -84,7 +106,7 @@ public final class Controller implements RawController, BasicController {
       // not change.
 
       foundConversation.firstMessage =
-          Uuids.equals(foundConversation.firstMessage, Uuids.NULL) ?
+          Uuid.equals(foundConversation.firstMessage, Uuid.NULL) ?
           message.id :
           foundConversation.firstMessage;
 
@@ -179,6 +201,7 @@ public final class Controller implements RawController, BasicController {
   public User newHashedUser(Uuid id, String name, Time creationTime, byte[] hashedPassword) {
 
     User user = null;
+    
 
     if (isIdFree(id)) {
 

@@ -21,13 +21,15 @@ import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
 import codeu.chat.common.LinearUuidGenerator;
 import codeu.chat.common.Message;
-import codeu.chat.common.Time;
 import codeu.chat.common.User;
-import codeu.chat.common.Uuid;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 import codeu.chat.util.store.Store;
 import codeu.chat.util.store.StoreAccessor;
 
 public final class Model {
+
+
 
   private static final Comparator<Uuid> UUID_COMPARE = new Comparator<Uuid>() {
 
@@ -73,7 +75,9 @@ public final class Model {
   private final Uuid.Generator userGenerations = new LinearUuidGenerator(null, 1, Integer.MAX_VALUE);
   private Uuid currentUserGeneration = userGenerations.make();
 
+
   public void add(User user, byte[] hashedPassword) {
+
     currentUserGeneration = userGenerations.make();
 
     userById.insert(user.id, user);
@@ -88,6 +92,7 @@ public final class Model {
   public HashMap<String, Integer> passBytext() { return passByText; }
 
   public StoreAccessor<String, byte[]> hashByText() { return hashByText; }
+
 
   public StoreAccessor<Uuid, User> userById() {
     return userById;

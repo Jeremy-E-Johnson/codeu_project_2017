@@ -21,15 +21,18 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.*;
 import java.util.Collection;
-
+import codeu.chat.util.Time;
+import codeu.chat.util.*;
+import codeu.chat.util.connections.Connection;
+import codeu.chat.util.store.StoreAccessor;
 import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
 import codeu.chat.common.LinearUuidGenerator;
 import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
-import codeu.chat.common.Time;
 import codeu.chat.common.User;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
@@ -38,6 +41,13 @@ import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Timeline;
 import codeu.chat.util.connections.Connection;
+
+import java.sql.ResultSet; 
+import java.sql.Statement; 
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
+//import codeu.chat.util.connections.Connection;
+
 
 public final class Server {
 
@@ -55,7 +65,11 @@ public final class Server {
   private final Controller controller;
 
   private final Relay relay;
-  private Uuid lastSeen = Uuids.NULL;
+  private Uuid lastSeen = Uuid.NULL;
+
+  //added database
+  private final Database database = new Database(); 
+
 
   public Server(final Uuid id, final byte[] secret, final Relay relay) {
 
@@ -88,6 +102,128 @@ public final class Server {
     });
   }
 
+  //Susan: transfers Users stored in the SQL database into the server database
+  private void userDBTransfer() {
+    //only consider updating server's user central database with sql data if the sql user database is not-empty
+
+              StoreAccessor<Time, User> currUsers = model.userByTime();
+              //start updating userlist in central database
+              ResultSet result = database.getUsers();
+
+          try {
+
+              long firstTimeLong = result.getLong("CREATION");
+            //  System.out.println(firstTimeLong);
+              Time firstTime = Time.fromMs(firstTimeLong);
+              //will return null if the central server db is empty...could not find a better way to check emptiness given the interface
+              User firstUser = currUsers.first(firstTime);
+              //update everything if db is empty in central server
+                 if (firstUser == null) {
+              // //iterate through list of existing users stored in database and update gui accordingly
+            
+                  while (result.next()) {
+                      
+                      String name = result.getString("NAME");
+                      String stringId = result.getString("ID");
+                      long longTime = result.getLong("CREATION");
+                      System.out.println(name);
+
+                      Time creation = Time.fromMs(longTime);
+                      //creation = creation.fromMs(longTime);
+                      Uuid id = Uuid.parse(stringId);
+                    
+                      //adding the new user to the server database so the user sees it (when they press update)
+                      controller.newUser(id, name, creation);
+                    }
+                  }
+                } catch (Exception e) {
+                  LOG.error(e, "Exception while handling transfer from sql db to server db.");
+                }
+            
+  }
+
+
+  //Susan: Transfers messages from SQL db to server db
+  private void convoDBTransfer(){
+
+          StoreAccessor<Uuid, Conversation> currConvos = model.conversationById();
+       
+            try {
+              ResultSet result = database.getConvos();
+              String firstUuidString = result.getString("ID");
+            //  System.out.println(firstTimeLong);
+              Uuid firstId = Uuid.parse(firstUuidString);
+              //will return null if the central server db is empty...could not find a better way to check emptiness given the interface
+              Conversation firstConvo = currConvos.first(firstId);
+
+              //update everything if db is empty in central server
+              if (firstConvo == null) {
+
+                // //iterate through list of existing users stored in database and update gui accordingly
+                while (result.next()) {
+                  //start updating userlist in central database
+
+                    String stringOwner = result.getString("OWNER");
+                    String stringId = result.getString("ID");
+                    long longTime = result.getLong("CREATION");
+                    String title = result.getString("TITLE");
+                    Time creation = Time.fromMs(longTime);
+                    //creation = creation.fromMs(longTime);
+                    Uuid id = Uuid.parse(stringId);
+                    Uuid owner = Uuid.parse(stringOwner);
+                  
+                    final Conversation conversation = controller.newConversation(id, title, owner, creation);
+                }
+              }
+            } catch (Exception e) {
+              LOG.error(e, "Exception while handling transfer of conversations from SQL to server db.");
+            }
+  }
+
+
+  //Susan: transfers messages stored in the SQL database into the server database
+  private void msgDBTransfer(){
+
+        StoreAccessor<Uuid, Message> currMsgs = model.messageById();
+        
+          try {
+            ResultSet result = database.getMsgs();
+            String firstUuidString = result.getString("ID");
+          //  System.out.println(firstTimeLong);
+            Uuid firstId = Uuid.parse(firstUuidString);
+            //will return null if the central server db is empty...could not find a better way to check emptiness given the interface
+            Message firstMsg = currMsgs.first(firstId);
+
+            //update everything if db is empty in central server
+            if (firstMsg == null) {
+
+              // //iterate through list of existing users stored in database and update gui accordingly
+              while (result.next()) {
+                //start updating userlist in central database
+
+                  String stringAuthor = result.getString("AUTHOR");
+                  String stringId = result.getString("ID");
+                  String stringConvId = result.getString("CONVERSATION");
+                  long longTime = result.getLong("CREATION");
+                  String body = result.getString("BODY");
+
+                  Time creation = Time.fromMs(longTime);
+                  //creation = creation.fromMs(longTime);
+                  Uuid id = Uuid.parse(stringId);
+                  Uuid author = Uuid.parse(stringAuthor);
+                  Uuid conversation = Uuid.parse(stringConvId);
+
+                  final Message message = controller.newMessage(id, author, conversation, body, creation);
+              }
+
+            }
+          } catch (Exception e) {
+            LOG.error(e, "Exception while handling transfer of conversations from SQL to server db.");
+          }
+      
+  }
+
+
   public void handleConnection(final Connection connection) {
     timeline.scheduleNow(new Runnable() {
       @Override
@@ -96,11 +232,29 @@ public final class Server {
 
           LOG.info("Handling connection...");
 
+          // Susan : the following if statements handle the transfer of users, conversations, messages from SQL databse to central server database
+          // 
+
+            if (!database.isTableEmpty("Users")) {
+                userDBTransfer();
+            }
+            
+            //Repeating above process for conversations
+            if (!database.isTableEmpty("Convos")) {
+                convoDBTransfer(); 
+            }
+
+            //Repeating above process for messages. First check is sql table for messages is empty
+            if (!database.isTableEmpty("Msgs")) {
+              msgDBTransfer();
+            }
+
           final boolean success = onMessage(
               connection.in(),
               connection.out());
 
           LOG.info("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
+
         } catch (Exception ex) {
 
           LOG.error(ex, "Exception while handling connection.");
@@ -112,6 +266,7 @@ public final class Server {
         } catch (Exception ex) {
           LOG.error(ex, "Exception while closing connection.");
         }
+
       }
     });
   }
@@ -121,6 +276,7 @@ public final class Server {
     final int type = Serializers.INTEGER.read(in);
 
     if (type == NetworkCode.NEW_MESSAGE_REQUEST) {
+
 
       final Uuid author = Uuids.SERIALIZER.read(in);
       final Uuid conversation = Uuids.SERIALIZER.read(in);
@@ -133,6 +289,7 @@ public final class Server {
       Serializers.nullable(Message.SERIALIZER).write(out, message);
 
       if (message != null) {
+        database.addMessage(message.id, author, conversation, message.content, message.creation);
         timeline.scheduleNow(createSendToRelayEvent(
             author,
             conversation,
@@ -146,22 +303,29 @@ public final class Server {
 
       final User user = controller.newUser(name, password);
 
+      //add to SQL database
+      database.addUser(user.id, user.creation, user.name);
+
       Serializers.INTEGER.write(out, NetworkCode.NEW_USER_RESPONSE);
       Serializers.nullable(User.SERIALIZER).write(out, user);
+
 
     } else if (type == NetworkCode.NEW_CONVERSATION_REQUEST) {
 
       final String title = Serializers.STRING.read(in);
-      final Uuid owner = Uuids.SERIALIZER.read(in);
+      final Uuid owner = Uuid.SERIALIZER.read(in);
 
       final Conversation conversation = controller.newConversation(title, owner);
+
+      //add to Convo database
+      database.addConvo(conversation.id, conversation.owner, conversation.creation, conversation.title);
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_CONVERSATION_RESPONSE);
       Serializers.nullable(Conversation.SERIALIZER).write(out, conversation);
 
     } else if (type == NetworkCode.GET_USERS_BY_ID_REQUEST) {
 
-      final Collection<Uuid> ids = Serializers.collection(Uuids.SERIALIZER).read(in);
+      final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<User> users = view.getUsers(ids);
 
@@ -177,7 +341,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_CONVERSATIONS_BY_ID_REQUEST) {
 
-      final Collection<Uuid> ids = Serializers.collection(Uuids.SERIALIZER).read(in);
+      final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<Conversation> conversations = view.getConversations(ids);
 
@@ -186,7 +350,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_ID_REQUEST) {
 
-      final Collection<Uuid> ids = Serializers.collection(Uuids.SERIALIZER).read(in);
+      final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<Message> messages = view.getMessages(ids);
 
@@ -196,11 +360,11 @@ public final class Server {
     } else if (type == NetworkCode.GET_USER_GENERATION_REQUEST) {
 
       Serializers.INTEGER.write(out, NetworkCode.GET_USER_GENERATION_RESPONSE);
-      Uuids.SERIALIZER.write(out, view.getUserGeneration());
+      Uuid.SERIALIZER.write(out, view.getUserGeneration());
 
     } else if (type == NetworkCode.GET_USERS_EXCLUDING_REQUEST) {
 
-      final Collection<Uuid> ids = Serializers.collection(Uuids.SERIALIZER).read(in);
+      final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<User> users = view.getUsersExcluding(ids);
 
@@ -228,7 +392,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_TIME_REQUEST) {
 
-      final Uuid conversation = Uuids.SERIALIZER.read(in);
+      final Uuid conversation = Uuid.SERIALIZER.read(in);
       final Time startTime = Time.SERIALIZER.read(in);
       final Time endTime = Time.SERIALIZER.read(in);
 
@@ -239,7 +403,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_RANGE_REQUEST) {
 
-      final Uuid rootMessage = Uuids.SERIALIZER.read(in);
+      final Uuid rootMessage = Uuid.SERIALIZER.read(in);
       final int range = Serializers.INTEGER.read(in);
 
       final Collection<Message> messages = view.getMessages(rootMessage, range);

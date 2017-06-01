@@ -15,6 +15,10 @@
 package codeu.chat;
 
 import java.io.IOException;
+import javax.swing.*;
+import javax.swing.UIManager.*;
+import javax.swing.plaf.ColorUIResource;
+
 
 import codeu.chat.client.Controller;
 import codeu.chat.client.simplegui.ChatSimpleGui;
@@ -61,6 +65,20 @@ final class SimpleGuiClientMain {
   }
 
   private static void runClient(Controller controller, View view) {
+
+      try {
+          ColorUIResource backgroundUI = new ColorUIResource(0xADDCE3);
+          UIManager.put("control", backgroundUI);
+
+          for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+              if ("Nimbus".equals(info.getName())) {
+                  UIManager.setLookAndFeel(info.getClassName());
+                  break;
+              }
+          }
+      } catch (Exception e) {
+          // If Nimbus is not available, you can set the GUI to another look and feel.
+      }
 
     final ChatSimpleGui chatSimpleGui = new ChatSimpleGui(controller, view);
 
