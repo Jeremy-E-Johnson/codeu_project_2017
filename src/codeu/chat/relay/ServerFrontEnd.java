@@ -41,6 +41,7 @@ public final class ServerFrontEnd {
       final Uuid id = Uuid.SERIALIZER.read(in);
       final String text = Serializers.STRING.read(in);
       final Time time = Time.SERIALIZER.read(in);
+      final byte[] hashedPassword = Serializers.BYTES.read(in);
 
       // I could have passed the relay and use its "pack" method but that would
       // have been more work than just building an object here.
@@ -51,6 +52,8 @@ public final class ServerFrontEnd {
         public String text() { return text; }
         @Override
         public Time time() { return time; }
+        @Override
+        public byte[] hashedPassword() {return hashedPassword; }
       };
     }
 
@@ -59,6 +62,7 @@ public final class ServerFrontEnd {
       Uuid.SERIALIZER.write(out, value.id());
       Serializers.STRING.write(out, value.text());
       Time.SERIALIZER.write(out, value.time());
+      Serializers.BYTES.write(out, value.hashedPassword());
     }
   };
 

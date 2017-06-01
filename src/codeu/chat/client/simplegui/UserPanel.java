@@ -152,8 +152,11 @@ public final class UserPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         if (userList.getSelectedIndex() != -1) {
           final String data = userList.getSelectedValue();
-          clientContext.user.signInUser(data);
-          userSignedInLabel.setText("Hello " + data);
+          final String password = (String) JOptionPane.showInputDialog(UserPanel.this, "Enter password: ",
+              "Authentication", JOptionPane.PLAIN_MESSAGE, null, null, "");
+          if (clientContext.user.signInUser(data, password)) {
+            userSignedInLabel.setText("Hello " + data);
+          }
         }
       }
     });
@@ -161,11 +164,13 @@ public final class UserPanel extends JPanel {
     userAddButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final String s = (String) JOptionPane.showInputDialog(
+        final String name = (String) JOptionPane.showInputDialog(
             UserPanel.this, "Enter user name:", "Add User", JOptionPane.PLAIN_MESSAGE,
             null, null, "");
-        if (s != null && s.length() > 0) {
-          clientContext.user.addUser(s);
+        final String password = (String) JOptionPane.showInputDialog(UserPanel.this, "Enter password: ",
+            "Authentication setup", JOptionPane.PLAIN_MESSAGE, null, null, "");
+        if (name != null && name.length() > 0) {
+          clientContext.user.addUser(name, password);
           UserPanel.this.getAllUsers(listModel);
         }
       }

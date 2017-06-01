@@ -40,15 +40,17 @@ public class Controller implements BasicController {
   }
 
   @Override
-  public Message newMessage(Uuid author, Uuid conversation, String body) {
+  public Message newMessage(Uuid author, Uuid conversation, int pass, String body) {
 
     Message response = null;
 
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_MESSAGE_REQUEST);
-      Uuid.SERIALIZER.write(connection.out(), author);
-      Uuid.SERIALIZER.write(connection.out(), conversation);
+
+      Uuids.SERIALIZER.write(connection.out(), author);
+      Uuids.SERIALIZER.write(connection.out(), conversation);
+      Serializers.INTEGER.write(connection.out(), pass);
       Serializers.STRING.write(connection.out(), body);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_MESSAGE_RESPONSE) {
@@ -65,7 +67,7 @@ public class Controller implements BasicController {
   }
 
   @Override
-  public User newUser(String name) {
+  public User newUser(String name, String password) {
 
     User response = null;
 
@@ -73,6 +75,7 @@ public class Controller implements BasicController {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_USER_REQUEST);
       Serializers.STRING.write(connection.out(), name);
+      Serializers.STRING.write(connection.out(), password);
       LOG.info("newUser: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_USER_RESPONSE) {
@@ -102,6 +105,53 @@ public class Controller implements BasicController {
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_CONVERSATION_RESPONSE) {
         response = Serializers.nullable(Conversation.SERIALIZER).read(connection.in());
+      } else {
+        LOG.error("Response from server failed.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error(ex, "Exception during call on server.");
+    }
+
+    return response;
+  }
+
+  // Int returned is 0 if login failed, and some random server chosen pass if successful.
+  public int loginUser(String name, String password) {
+
+    int response = 0;
+
+    try(final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.LOGIN_USER_REQUEST);
+      Serializers.STRING.write(connection.out(), name);
+      Serializers.STRING.write(connection.out(), password);
+
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.LOGIN_USER_RESPONSE) {
+        response = Serializers.INTEGER.read(connection.in());
+      } else {
+        LOG.error("Response from server failed.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error(ex, "Exception during call on server.");
+    }
+
+    return response;
+  }
+
+  public boolean logoutUser(String name, int pass) {
+
+    boolean response = false;
+
+    try(final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.LOGOUT_USER_REQUEST);
+      Serializers.STRING.write(connection.out(), name);
+      Serializers.INTEGER.write(connection.out(), pass);
+
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.LOGOUT_USER_RESPONSE) {
+        response = Serializers.BOOLEAN.read(connection.in());
       } else {
         LOG.error("Response from server failed.");
       }

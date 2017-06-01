@@ -34,12 +34,20 @@ import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
 import codeu.chat.common.User;
+import codeu.chat.common.Uuid;
+import codeu.chat.common.Uuids;
+import codeu.chat.util.Logger;
+import codeu.chat.util.Serializer;
+import codeu.chat.util.Serializers;
+import codeu.chat.util.Timeline;
+import codeu.chat.util.connections.Connection;
 
 import java.sql.ResultSet; 
 import java.sql.Statement; 
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 //import codeu.chat.util.connections.Connection;
+
 
 public final class Server {
 
@@ -269,27 +277,31 @@ public final class Server {
 
     if (type == NetworkCode.NEW_MESSAGE_REQUEST) {
 
-      final Uuid author = Uuid.SERIALIZER.read(in);
-      final Uuid conversation = Uuid.SERIALIZER.read(in);
+
+      final Uuid author = Uuids.SERIALIZER.read(in);
+      final Uuid conversation = Uuids.SERIALIZER.read(in);
+      final int pass = Serializers.INTEGER.read(in);
       final String content = Serializers.STRING.read(in);
 
-      final Message message = controller.newMessage(author, conversation, content);
-      //add to message database
-      database.addMessage(message.id, author, conversation, message.content, message.creation);
+      final Message message = controller.newMessage(author, conversation, pass, content);
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_MESSAGE_RESPONSE);
       Serializers.nullable(Message.SERIALIZER).write(out, message);
 
-      timeline.scheduleNow(createSendToRelayEvent(
-          author,
-          conversation,
-          message.id));
+      if (message != null) {
+        database.addMessage(message.id, author, conversation, message.content, message.creation);
+        timeline.scheduleNow(createSendToRelayEvent(
+            author,
+            conversation,
+            message.id));
+      }
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
 
       final String name = Serializers.STRING.read(in);
+      final String password = Serializers.STRING.read(in);
 
-      final User user = controller.newUser(name);
+      final User user = controller.newUser(name, password);
 
       //add to SQL database
       database.addUser(user.id, user.creation, user.name);
@@ -399,6 +411,26 @@ public final class Server {
       Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_RANGE_RESPONSE);
       Serializers.collection(Message.SERIALIZER).write(out, messages);
 
+    } else if (type == NetworkCode.LOGIN_USER_REQUEST) {
+
+      final String name = Serializers.STRING.read(in);
+      final String password = Serializers.STRING.read(in);
+
+      final int pass = controller.loginUser(name, password);
+
+      Serializers.INTEGER.write(out, NetworkCode.LOGIN_USER_RESPONSE);
+      Serializers.INTEGER.write(out, pass);
+
+    } else if (type == NetworkCode.LOGOUT_USER_REQUEST) {
+
+      final String name = Serializers.STRING.read(in);
+      final int pass = Serializers.INTEGER.read(in);
+
+      final boolean response = controller.logoutUser(name, pass);
+
+      Serializers.INTEGER.write(out, NetworkCode.LOGOUT_USER_RESPONSE);
+      Serializers.BOOLEAN.write(out, response);
+
     } else {
 
       // In the case that the message was not handled make a dummy message with
@@ -420,7 +452,7 @@ public final class Server {
     User user = model.userById().first(relayUser.id());
 
     if (user == null) {
-      user = controller.newUser(relayUser.id(), relayUser.text(), relayUser.time());
+      user = controller.newHashedUser(relayUser.id(), relayUser.text(), relayUser.time(), relayUser.hashedPassword());
     }
 
     Conversation conversation = model.conversationById().first(relayConversation.id());
@@ -439,7 +471,7 @@ public final class Server {
     Message message = model.messageById().first(relayMessage.id());
 
     if (message == null) {
-      message = controller.newMessage(relayMessage.id(),
+      message = controller.newRelayMessage(relayMessage.id(),
                                       user.id,
                                       conversation.id,
                                       relayMessage.text(),
@@ -458,9 +490,9 @@ public final class Server {
         final Message message = view.findMessage(messageId);
         relay.write(id,
                     secret,
-                    relay.pack(user.id, user.name, user.creation),
-                    relay.pack(conversation.id, conversation.title, conversation.creation),
-                    relay.pack(message.id, message.content, message.creation));
+                    relay.pack(user.id, user.name, user.creation, user.hashedPassword),
+                    relay.pack(conversation.id, conversation.title, conversation.creation, null),
+                    relay.pack(message.id, message.content, message.creation, null));
       }
     };
   }

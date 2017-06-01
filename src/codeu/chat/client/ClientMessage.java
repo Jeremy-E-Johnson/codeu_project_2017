@@ -99,7 +99,8 @@ public final class ClientMessage {
   public void addMessage(Uuid author, Uuid conversation, String body) {
     final boolean validInputs = isValidBody(body) && (author != null) && (conversation != null);
 
-    final Message message = (validInputs) ? controller.newMessage(author, conversation, body) : null;
+    final Message message = (validInputs) ? controller.newMessage(author, conversation,
+        userContext.getPass(), body) : null;
 
     if (message == null) {
       System.out.format("Error: message not created - %s.\n",

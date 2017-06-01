@@ -31,7 +31,7 @@ public interface BasicController {
   //   or else the server won't apply the change. If the operation is
   //   successful, a Message object will be returned representing the full
   //   state of the message on the server.
-  Message newMessage(Uuid author, Uuid conversation, String body);
+  Message newMessage(Uuid author, Uuid conversation, int pass, String body);
 
   // NEW USER
   //
@@ -40,7 +40,7 @@ public interface BasicController {
   //   successful, a User object will be returned representing the full
   //   state of the user on the server. Whether user names can be shared
   //   is undefined.
-  User newUser(String name);
+  User newUser(String name, String password);
 
   // NEW CONVERSATION
   //

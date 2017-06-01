@@ -33,6 +33,7 @@ public final class User {
       Uuid.SERIALIZER.write(out, value.id);
       Serializers.STRING.write(out, value.name);
       Time.SERIALIZER.write(out, value.creation);
+      Serializers.BYTES.write(out, value.hashedPassword);
 
     }
 
@@ -42,7 +43,8 @@ public final class User {
       return new User(
           Uuid.SERIALIZER.read(in),
           Serializers.STRING.read(in),
-          Time.SERIALIZER.read(in)
+          Time.SERIALIZER.read(in),
+          Serializers.BYTES.read(in)
       );
 
     }
@@ -51,12 +53,14 @@ public final class User {
   public final Uuid id;
   public final String name;
   public final Time creation;
+  public final byte[] hashedPassword;
 
-  public User(Uuid id, String name, Time creation) {
+  public User(Uuid id, String name, Time creation, byte[] hashedPassword) {
 
     this.id = id;
     this.name = name;
     this.creation = creation;
+    this.hashedPassword = hashedPassword;
 
   }
 }

@@ -15,6 +15,7 @@
 package codeu.chat.server;
 
 import java.util.Comparator;
+import java.util.HashMap;
 
 import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
@@ -59,6 +60,10 @@ public final class Model {
   private final Store<Time, User> userByTime = new Store<>(TIME_COMPARE);
   private final Store<String, User> userByText = new Store<>(STRING_COMPARE);
 
+  //Hash map for passByText because we need mutability of the values
+  private final HashMap<String, Integer> passByText = new HashMap<>();
+  private final Store<String, byte[]> hashByText = new Store<>(STRING_COMPARE);
+
   private final Store<Uuid, Conversation> conversationById = new Store<>(UUID_COMPARE);
   private final Store<Time, Conversation> conversationByTime = new Store<>(TIME_COMPARE);
   private final Store<String, Conversation> conversationByText = new Store<>(STRING_COMPARE);
@@ -71,13 +76,22 @@ public final class Model {
   private Uuid currentUserGeneration = userGenerations.make();
 
 
-  public void add(User user) {
+  public void add(User user, byte[] hashedPassword) {
+
     currentUserGeneration = userGenerations.make();
 
     userById.insert(user.id, user);
     userByTime.insert(user.creation, user);
     userByText.insert(user.name, user);
+    passByText.put(user.name, 0);
+    hashByText.insert(user.name, hashedPassword);
   }
+
+  public void setNewPass(String name, int newPass) { passByText.put(name, newPass); }
+
+  public HashMap<String, Integer> passBytext() { return passByText; }
+
+  public StoreAccessor<String, byte[]> hashByText() { return hashByText; }
 
 
   public StoreAccessor<Uuid, User> userById() {
