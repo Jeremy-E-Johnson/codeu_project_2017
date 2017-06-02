@@ -123,7 +123,7 @@ public final class Controller implements RawController, BasicController {
   }
 
   // We assume the Relay is being truthful and do not have a pass based security on new messages from it.
-  public Message newRelayMessage(Uuid id, Uuid author, Uuid conversation, String body, Time creationTime) {
+  public Message transferedMessage(Uuid id, Uuid author, Uuid conversation, String body, Time creationTime) {
 
     final User foundUser = model.userById().first(author);
     final Conversation foundConversation = model.conversationById().first(conversation);
@@ -131,14 +131,14 @@ public final class Controller implements RawController, BasicController {
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) { //DO IT HERE
 
-      message = new Message(id, Uuids.NULL, Uuids.NULL, creationTime, author, body);
+      message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body);
       model.add(message);
       LOG.info("Message added: %s", message.id);
 
       // Find and update the previous "last" message so that it's "next" value
       // will point to the new message.
 
-      if (Uuids.equals(foundConversation.lastMessage, Uuids.NULL)) {
+      if (Uuid.equals(foundConversation.lastMessage, Uuid.NULL)) {
 
         // The conversation has no messages in it, that's why the last message is NULL (the first
         // message should be NULL too. Since there is no last message, then it is not possible
@@ -154,7 +154,7 @@ public final class Controller implements RawController, BasicController {
       // not change.
 
       foundConversation.firstMessage =
-          Uuids.equals(foundConversation.firstMessage, Uuids.NULL) ?
+          Uuid.equals(foundConversation.firstMessage, Uuid.NULL) ?
               message.id :
               foundConversation.firstMessage;
 
@@ -198,7 +198,7 @@ public final class Controller implements RawController, BasicController {
     return user;
   }
 
-  public User newHashedUser(Uuid id, String name, Time creationTime, byte[] hashedPassword) {
+  public User transferUser(Uuid id, String name, Time creationTime, byte[] hashedPassword) {
 
     User user = null;
     

@@ -50,11 +50,12 @@ public final class Database implements DatabaseInt {
 
         this.conn = aconn;
 
-		//initiatize user and conversation tables if they do not exist
+		//initialize user and conversation tables if they do not exist
 		String userString = "CREATE TABLE if not exists Users" +
 							  "(ID VARCHAR(16)," +
 							  "NAME VARCHAR(254)," +
-							  "CREATION BIGINT);";
+							  "CREATION BIGINT," +
+								"HASHEDPASS VARBINARY);";
 
 		String convoString =  "CREATE TABLE if not exists Convos" +
 								"(ID VARCHAR(254)," +
@@ -77,11 +78,11 @@ public final class Database implements DatabaseInt {
 
 
 		  //    stmt.close();
-	    } catch ( Exception e ) {
+     } catch ( Exception e ) {
 	      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
 
-	    }
-	    System.out.println("Table created successfully");
+     }
+    System.out.println("Table created successfully");
 	}
 
 // @table input : name of the table in SQL database
@@ -96,19 +97,19 @@ public final class Database implements DatabaseInt {
   			return !result.next();
   		} catch (SQLException e) {
             System.out.println("error in finding emptiness" + e.getMessage());
-        } 
+			}
 
-        return null;
+		  return null;
 	}
 
 
 
 //Adds user to SQL database
 	@Override
-  	public boolean addUser(Uuid id, Time creation, String name) {
+  	public boolean addUser(Uuid id, Time creation, String name, byte[] hashedPass) {
   		try {
-  			PreparedStatement preparedStat = conn.prepareStatement("INSERT INTO Users (ID, NAME, CREATION)" +
-	  						  				 "VALUES (?, ?, ?);");
+  			PreparedStatement preparedStat = conn.prepareStatement("INSERT INTO Users (ID, NAME, CREATION, HASHEDPASS)" +
+	  						  				 "VALUES (?, ?, ?, ?);");
   											 long msTime = creation.inMs();
   											 String stringId = id.toString();
   											 stringId = stringId.replace("[UUID:","");
@@ -117,6 +118,7 @@ public final class Database implements DatabaseInt {
 	  						  				 preparedStat.setString(1, stringId);
 	  						  				 preparedStat.setString(2, name);
 	  						  				 preparedStat.setLong(3, msTime);
+	  						  				 preparedStat.setBytes(4, hashedPass);
 	  						  				 int count = preparedStat.executeUpdate();
 											 System.out.println("isUpdated? " + count);
 			} catch (Exception e) {
@@ -223,7 +225,7 @@ public final class Database implements DatabaseInt {
   	}
 
 
-    // returns ResultSet of Conversatio SQL table entries
+    // returns ResultSet of Conversation SQL table entries
   	@Override
     public ResultSet getConvos() {
 

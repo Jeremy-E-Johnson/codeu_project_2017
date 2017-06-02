@@ -57,13 +57,19 @@ final class ServerMain {
       System.exit(1);
     }
 
-    // This is the directory where it is safe to store data accross runs
+    // This is the directory where it is safe to store data across runs
     // of the server.
     final String persistentPath = args[3];
 
-    final RemoteAddress relayAddress = args.length > 4 ?
-                                       RemoteAddress.parse(args[4]) :
-                                       null;
+    RemoteAddress relayAddress = null;
+
+    try {
+      relayAddress = args.length > 4 ?
+          RemoteAddress.parse(args[4]) :
+          null;
+    } catch (ArrayIndexOutOfBoundsException ex) {
+      LOG.error("Invalid remote address - will not contact relay");
+    }
 
     try (
         final ConnectionSource serverSource = ServerConnectionSource.forPort(myPort);

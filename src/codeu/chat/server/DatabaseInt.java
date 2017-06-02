@@ -28,7 +28,7 @@ public interface DatabaseInt {
     /**
     * Returns boolean if successfully stored user 
     **/
-    public boolean addUser(Uuid id, Time creation, String name);
+    public boolean addUser(Uuid id, Time creation, String name, byte[] hashedPass);
 
 
     /**

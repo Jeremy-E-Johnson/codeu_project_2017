@@ -34,8 +34,8 @@ import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
 import codeu.chat.common.User;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
+import codeu.chat.util.Uuid;
+//import codeu.chat.common.Uuids;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
@@ -126,6 +126,7 @@ public final class Server {
                       String name = result.getString("NAME");
                       String stringId = result.getString("ID");
                       long longTime = result.getLong("CREATION");
+                      byte[] hashedPass = result.getBytes("HASHEDPASS");
                       System.out.println(name);
 
                       Time creation = Time.fromMs(longTime);
@@ -133,7 +134,7 @@ public final class Server {
                       Uuid id = Uuid.parse(stringId);
                     
                       //adding the new user to the server database so the user sees it (when they press update)
-                      controller.newUser(id, name, creation);
+                      controller.transferUser(id, name, creation, hashedPass);
                     }
                   }
                 } catch (Exception e) {
@@ -213,7 +214,7 @@ public final class Server {
                   Uuid author = Uuid.parse(stringAuthor);
                   Uuid conversation = Uuid.parse(stringConvId);
 
-                  final Message message = controller.newMessage(id, author, conversation, body, creation);
+                  final Message message = controller.transferedMessage(id, author, conversation, body, creation);
               }
 
             }
@@ -232,10 +233,11 @@ public final class Server {
 
           LOG.info("Handling connection...");
 
-          // Susan : the following if statements handle the transfer of users, conversations, messages from SQL databse to central server database
+          // Susan : the following if statements handle the transfer of users, conversations, messages from SQL database to central server database
           // 
 
             if (!database.isTableEmpty("Users")) {
+                LOG.info("Transferring users out of database.");
                 userDBTransfer();
             }
             
@@ -278,8 +280,8 @@ public final class Server {
     if (type == NetworkCode.NEW_MESSAGE_REQUEST) {
 
 
-      final Uuid author = Uuids.SERIALIZER.read(in);
-      final Uuid conversation = Uuids.SERIALIZER.read(in);
+      final Uuid author = Uuid.SERIALIZER.read(in);
+      final Uuid conversation = Uuid.SERIALIZER.read(in);
       final int pass = Serializers.INTEGER.read(in);
       final String content = Serializers.STRING.read(in);
 
@@ -304,7 +306,7 @@ public final class Server {
       final User user = controller.newUser(name, password);
 
       //add to SQL database
-      database.addUser(user.id, user.creation, user.name);
+      database.addUser(user.id, user.creation, user.name, user.hashedPassword);
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_USER_RESPONSE);
       Serializers.nullable(User.SERIALIZER).write(out, user);
@@ -452,7 +454,7 @@ public final class Server {
     User user = model.userById().first(relayUser.id());
 
     if (user == null) {
-      user = controller.newHashedUser(relayUser.id(), relayUser.text(), relayUser.time(), relayUser.hashedPassword());
+      user = controller.transferUser(relayUser.id(), relayUser.text(), relayUser.time(), relayUser.hashedPassword());
     }
 
     Conversation conversation = model.conversationById().first(relayConversation.id());
@@ -471,7 +473,7 @@ public final class Server {
     Message message = model.messageById().first(relayMessage.id());
 
     if (message == null) {
-      message = controller.newRelayMessage(relayMessage.id(),
+      message = controller.transferedMessage(relayMessage.id(),
                                       user.id,
                                       conversation.id,
                                       relayMessage.text(),
