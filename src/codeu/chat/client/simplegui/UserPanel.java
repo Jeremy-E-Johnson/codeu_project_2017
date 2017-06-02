@@ -101,7 +101,7 @@ public final class UserPanel extends JPanel {
     final JButton userSignInButton = new JButton("Sign In");
     final JButton userAddButton = new JButton("Add");
 
-    //buttonPanel.add(userUpdateButton);
+    buttonPanel.add(userUpdateButton);
     buttonPanel.add(userSignInButton);
     buttonPanel.add(userAddButton);
 
